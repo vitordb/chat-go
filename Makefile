@@ -2,7 +2,7 @@
 
 # Variáveis
 GO=go
-DOCKER_COMPOSE=docker-compose
+DOCKER=docker compose
 SERVER_CMD=./cmd/server/main.go
 BOT_CMD=./cmd/bot/main.go
 BUILD_DIR=./build
@@ -20,13 +20,13 @@ all: build
 # Iniciar toda a aplicação com Docker Compose
 docker:
 	@echo "$(VERDE)Iniciando aplicação com Docker Compose...$(RESET)"
-	@$(DOCKER_COMPOSE) up -d
+	@$(DOCKER) up -d
 	@echo "$(VERDE)Serviços iniciados! Acesse http://localhost:8080$(RESET)"
 
 # Parar os containers Docker
 docker-down:
 	@echo "$(AMARELO)Parando todos os containers...$(RESET)"
-	@$(DOCKER_COMPOSE) down
+	@$(DOCKER) down
 	@echo "$(VERDE)Containers parados com sucesso.$(RESET)"
 
 # Executar o servidor e o bot em terminais separados

@@ -9,7 +9,7 @@ This application consists of two main components:
 If you have Docker and Docker Compose installed, you can run the entire application stack with a single command:
 
 ```bash
-docker-compose up
+docker compose up
 ```
 
 Or using the Makefile:
