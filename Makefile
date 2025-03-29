@@ -1,80 +1,80 @@
-# Makefile para o projeto Chat-Go
+# Makefile for the Chat-Go project
 
-# Variáveis
+# Variables
 GO=go
 DOCKER=docker compose
 SERVER_CMD=./cmd/server/main.go
 BOT_CMD=./cmd/bot/main.go
 BUILD_DIR=./build
 
-# Cores para melhorar a legibilidade
-VERDE=\033[0;32m
-AMARELO=\033[1;33m
+# Colors for better readability
+GREEN=\033[0;32m
+YELLOW=\033[1;33m
 RESET=\033[0m
 
-# Comandos principais
+# Main commands
 .PHONY: all run run-server run-bot build clean test docker docker-down help
 
 all: build
 
-# Iniciar toda a aplicação com Docker Compose
+# Start the entire application with Docker Compose
 docker:
-	@echo "$(VERDE)Iniciando aplicação com Docker Compose...$(RESET)"
+	@echo "$(GREEN)Starting application with Docker Compose...$(RESET)"
 	@$(DOCKER) up -d
-	@echo "$(VERDE)Serviços iniciados! Acesse http://localhost:8080$(RESET)"
+	@echo "$(GREEN)Services started! Access http://localhost:8080$(RESET)"
 
-# Parar os containers Docker
+# Stop Docker containers
 docker-down:
-	@echo "$(AMARELO)Parando todos os containers...$(RESET)"
+	@echo "$(YELLOW)Stopping all containers...$(RESET)"
 	@$(DOCKER) down
-	@echo "$(VERDE)Containers parados com sucesso.$(RESET)"
+	@echo "$(GREEN)Containers stopped successfully.$(RESET)"
 
-# Executar o servidor e o bot em terminais separados
+# Run server and bot in separate terminals
 run:
-	@echo "$(VERDE)Iniciando aplicação...$(RESET)"
-	@echo "$(AMARELO)Certifique-se de que PostgreSQL e RabbitMQ estejam funcionando!$(RESET)"
-	@echo "$(VERDE)Iniciando servidor na porta 8080...$(RESET)"
+	@echo "$(GREEN)Starting application...$(RESET)"
+	@echo "$(YELLOW)Make sure PostgreSQL and RabbitMQ are running!$(RESET)"
+	@echo "$(GREEN)Starting server on port 8080...$(RESET)"
 	@$(GO) run $(SERVER_CMD) & \
-	echo "$(VERDE)Iniciando bot de cotações...$(RESET)" && \
+	echo "$(GREEN)Starting stock bot...$(RESET)" && \
 	$(GO) run $(BOT_CMD)
 
-# Executar apenas o servidor web
+# Run only the web server
 run-server:
-	@echo "$(VERDE)Iniciando servidor web na porta 8080...$(RESET)"
+	@echo "$(GREEN)Starting web server on port 8080...$(RESET)"
 	@$(GO) run $(SERVER_CMD)
 
-# Executar apenas o bot de cotações
+# Run only the stock bot
 run-bot:
-	@echo "$(VERDE)Iniciando bot de cotações...$(RESET)"
+	@echo "$(GREEN)Starting stock bot...$(RESET)"
 	@$(GO) run $(BOT_CMD)
 
-# Construir os binários
+# Build binaries
 build:
-	@echo "$(VERDE)Compilando aplicação...$(RESET)"
+	@echo "$(GREEN)Compiling application...$(RESET)"
 	@mkdir -p $(BUILD_DIR)
 	@$(GO) build -o $(BUILD_DIR)/server $(SERVER_CMD)
 	@$(GO) build -o $(BUILD_DIR)/bot $(BOT_CMD)
-	@echo "$(VERDE)Binários criados em $(BUILD_DIR)/$(RESET)"
+	@echo "$(GREEN)Binaries created in $(BUILD_DIR)/$(RESET)"
 
-# Executar os testes
+# Run tests
 test:
-	@echo "$(VERDE)Executando testes...$(RESET)"
+	@echo "$(GREEN)Running tests...$(RESET)"
 	@$(GO) test ./... -v
 
-# Limpar binários e arquivos temporários
+# Clean binaries and temporary files
 clean:
-	@echo "$(AMARELO)Removendo binários e arquivos temporários...$(RESET)"
+	@echo "$(YELLOW)Removing binaries and temporary files...$(RESET)"
 	@rm -rf $(BUILD_DIR)
-	@echo "$(VERDE)Limpeza concluída.$(RESET)"
+	@echo "$(GREEN)Cleanup completed.$(RESET)"
 
-# Ajuda
+# Help
 help:
-	@echo "$(VERDE)Comandos disponíveis:$(RESET)"
-	@echo "  make docker       - Inicia todos os serviços com Docker Compose"
-	@echo "  make docker-down  - Para todos os containers Docker"
-	@echo "  make run          - Executa o servidor e o bot simultaneamente"
-	@echo "  make run-server   - Executa apenas o servidor web"
-	@echo "  make run-bot      - Executa apenas o bot de cotações"
-	@echo "  make build        - Compila os binários da aplicação"
-	@echo "  make test         - Executa todos os testes"
-	@echo "  make clean        - Remove binários e arquivos temporários" 
+	@echo "$(GREEN)Available commands:$(RESET)"
+	@echo "  make docker       - Start all services with Docker Compose"
+	@echo "  make docker-down  - Stop all Docker containers"
+	@echo "  make run          - Run server and bot simultaneously"
+	@echo "  make run-server   - Run only the web server"
+	@echo "  make run-bot      - Run only the stock bot"
+	@echo "  make build        - Compile application binaries"
+	@echo "  make test         - Run all tests"
+	@echo "  make clean        - Remove binaries and temporary files" 
