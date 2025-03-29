@@ -12,6 +12,12 @@ If you have Docker and Docker Compose installed, you can run the entire applicat
 docker-compose up
 ```
 
+Or using the Makefile:
+
+```bash
+make docker
+```
+
 This will start:
 - PostgreSQL database
 - RabbitMQ message broker
@@ -19,6 +25,12 @@ This will start:
 - Stock bot
 
 Access the application in your browser at: http://localhost:8080
+
+To stop all containers:
+
+```bash
+make docker-down
+```
 
 ## Manual Setup
 
@@ -54,6 +66,21 @@ go mod download
 
 ### Running the Application
 
+You can use the provided Makefile to run the application:
+
+```bash
+# Run both server and bot
+make run
+
+# Run only the server
+make run-server
+
+# Run only the bot
+make run-bot
+```
+
+Alternatively, you can run the components manually:
+
 1. Run the server:
 ```bash
 go run cmd/server/main.go
@@ -73,9 +100,34 @@ go run cmd/bot/main.go
 3. Send messages to other users
 4. Use the `/stock=<code>` command to get stock quotes (e.g., `/stock=aapl.us`)
 
+## Building the Application
+
+To build the application binaries:
+
+```bash
+make build
+```
+
+This will create binaries in the `build` directory.
+
 ## Testing
 
 Run the tests with:
+
+```bash
+make test
+```
+
+Or manually:
+
 ```bash
 go test ./... -v
+```
+
+## Available Make Commands
+
+For a full list of available commands:
+
+```bash
+make help
 ``` 
