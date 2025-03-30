@@ -12,24 +12,24 @@ import (
 	"github.com/dbvitor/chat-go/internal/models"
 )
 
-// StockService handles stock-related business logic
+// Service for stock quote queries
 type StockService struct {
 	apiURL string
 }
 
-// NewStockService creates a new stock service
+// Creates the stock quote service
 func NewStockService() *StockService {
 	return &StockService{
 		apiURL: os.Getenv("STOCK_API_URL"),
 	}
 }
 
-// GetStockQuote retrieves a stock quote from the API
+// Fetches the current quote from stooq.com service
 func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, error) {
-	// Create API URL
+	// Builds the URL with the stock code
 	url := fmt.Sprintf(s.apiURL, stockCode)
 
-	// Make HTTP request
+	// Makes the HTTP request
 	resp, err := http.Get(url)
 	if err != nil {
 		return &models.StockResponse{
@@ -39,7 +39,7 @@ func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, e
 	}
 	defer resp.Body.Close()
 
-	// Check response status
+	// Verifies if the response was OK
 	if resp.StatusCode != http.StatusOK {
 		return &models.StockResponse{
 			Symbol: stockCode,
@@ -47,10 +47,10 @@ func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, e
 		}, nil
 	}
 
-	// Parse CSV response
+	// Response is in CSV format, so we use the parser
 	reader := csv.NewReader(resp.Body)
 
-	// Read header
+	// Reads the header to identify the price column
 	header, err := reader.Read()
 	if err != nil {
 		return &models.StockResponse{
@@ -59,7 +59,7 @@ func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, e
 		}, nil
 	}
 
-	// Find close price index
+	// Looks for the "Close" column which has the closing price
 	closeIndex := -1
 	for i, column := range header {
 		if strings.ToLower(column) == "close" {
@@ -68,6 +68,7 @@ func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, e
 		}
 	}
 
+	// If column not found, returns error
 	if closeIndex == -1 {
 		return &models.StockResponse{
 			Symbol: stockCode,
@@ -75,7 +76,7 @@ func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, e
 		}, nil
 	}
 
-	// Read data row
+	// Reads the data line (first line after header)
 	row, err := reader.Read()
 	if err != nil {
 		if err == io.EOF {
@@ -90,7 +91,7 @@ func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, e
 		}, nil
 	}
 
-	// Parse close price
+	// Converts price from string to float
 	closePrice, err := strconv.ParseFloat(row[closeIndex], 64)
 	if err != nil {
 		return &models.StockResponse{
@@ -99,7 +100,7 @@ func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, e
 		}, nil
 	}
 
-	// Check if close price is valid
+	// Some APIs return 0 when the code is invalid
 	if closePrice == 0 {
 		return &models.StockResponse{
 			Symbol: stockCode,
@@ -107,7 +108,7 @@ func (s *StockService) GetStockQuote(stockCode string) (*models.StockResponse, e
 		}, nil
 	}
 
-	// Return stock response
+	// Returns the result with success
 	return &models.StockResponse{
 		Symbol: stockCode,
 		Price:  closePrice,

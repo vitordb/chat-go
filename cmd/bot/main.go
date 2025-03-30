@@ -20,6 +20,14 @@ func main() {
 		log.Println("Warning: .env file not found")
 	}
 
+	// Check STOCK_API_URL variable
+	stockApiUrl := os.Getenv("STOCK_API_URL")
+	if stockApiUrl == "" {
+		log.Println("ERROR: STOCK_API_URL environment variable not configured!")
+	} else {
+		log.Printf("STOCK_API_URL configured: %s", stockApiUrl)
+	}
+
 	// Initialize RabbitMQ connection
 	rabbitMQ, err := broker.NewRabbitMQ()
 	if err != nil {
@@ -66,6 +74,7 @@ func main() {
 			log.Printf("Processing stock request: %s for chatroom %s", stockCode, chatroomID)
 
 			// Get stock quote
+			log.Printf("Getting quote for %s", stockCode)
 			stockResponse, err := stockService.GetStockQuote(stockCode)
 			if err != nil {
 				log.Printf("Error getting stock quote: %v", err)
@@ -75,10 +84,19 @@ func main() {
 				}
 			}
 
+			if stockResponse.Error != "" {
+				log.Printf("Error retrieving quote: %s", stockResponse.Error)
+			} else {
+				log.Printf("Quote successfully retrieved: %s = $%.2f", stockResponse.Symbol, stockResponse.Price)
+			}
+
 			// Publish result
+			log.Printf("Publishing result to chatroom %s", chatroomID)
 			err = rabbitMQ.PublishStockResult(stockResponse, chatroomID)
 			if err != nil {
 				log.Printf("Error publishing result: %v", err)
+			} else {
+				log.Printf("Result successfully published to chatroom %s", chatroomID)
 			}
 		}(delivery.Body)
 	}

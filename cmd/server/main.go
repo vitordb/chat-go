@@ -20,6 +20,22 @@ func main() {
 		log.Println("Warning: .env file not found")
 	}
 
+	// Verify RabbitMQ queues configuration
+	stockQueue := os.Getenv("RABBITMQ_STOCK_QUEUE")
+	resultQueue := os.Getenv("RABBITMQ_RESULT_QUEUE")
+	if stockQueue == "" {
+		stockQueue = "stock_requests" // Default
+		log.Println("RABBITMQ_STOCK_QUEUE not set, using default: stock_requests")
+	} else {
+		log.Printf("Using RABBITMQ_STOCK_QUEUE: %s", stockQueue)
+	}
+	if resultQueue == "" {
+		resultQueue = "stock_results" // Default
+		log.Println("RABBITMQ_RESULT_QUEUE not set, using default: stock_results")
+	} else {
+		log.Printf("Using RABBITMQ_RESULT_QUEUE: %s", resultQueue)
+	}
+
 	// Initialize database connection
 	err = database.Initialize()
 	if err != nil {
@@ -39,6 +55,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to consume stock results: %v", err)
 	}
+	log.Printf("Successfully registered consumer for stock results queue: %s", resultQueue)
 
 	// Initialize authentication
 	auth.Initialize()

@@ -71,7 +71,6 @@ func (r *MessageRepository) GetByChatroomID(chatroomID string, limit int) ([]*mo
 		return nil, err
 	}
 
-	// Reverse the messages to get chronological order (oldest first)
 	for i, j := 0, len(messages)-1; i < j; i, j = i+1, j-1 {
 		messages[i], messages[j] = messages[j], messages[i]
 	}

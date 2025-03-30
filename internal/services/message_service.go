@@ -11,20 +11,20 @@ import (
 	"github.com/dbvitor/chat-go/pkg/broker"
 )
 
-// Max messages to retrieve from the database
+// Maximum number of messages to load from history
 const MaxMessages = 50
 
-// StockCommandPattern is the pattern for stock commands
+// Regex to validate stock quote commands
 var StockCommandPattern = regexp.MustCompile(`^/stock=([A-Za-z0-9.]+)$`)
 
-// MessageService handles message-related business logic
+// Service responsible for message operations
 type MessageService struct {
 	messageRepo *database.MessageRepository
 	userRepo    *database.UserRepository
 	rabbitMQ    *broker.RabbitMQ
 }
 
-// NewMessageService creates a new message service
+// Creates a new instance of the message service
 func NewMessageService(db *sql.DB, rabbitMQ *broker.RabbitMQ) *MessageService {
 	return &MessageService{
 		messageRepo: database.NewMessageRepository(db),
@@ -33,33 +33,32 @@ func NewMessageService(db *sql.DB, rabbitMQ *broker.RabbitMQ) *MessageService {
 	}
 }
 
-// CreateMessage creates a new message
+// Creates a new message and saves it to the database, or processes special commands
 func (s *MessageService) CreateMessage(userID, chatroomID, content string) (*models.Message, error) {
-	// Get user by ID
+	// Get user data
 	user, err := s.userRepo.GetByID(userID)
 	if err != nil {
 		return nil, err
 	}
 
-	// Check if message is a stock command
+	// Check if it's a stock command
 	if match := StockCommandPattern.FindStringSubmatch(content); match != nil {
-		// Extract stock code
 		stockCode := match[1]
 
-		// Publish stock request
+		// Send request to the stock bot
 		err := s.rabbitMQ.PublishStockRequest(chatroomID, stockCode)
 		if err != nil {
 			return nil, err
 		}
 
-		// Return nil to indicate that the message should not be stored
+		// We don't save the command as a message
 		return nil, nil
 	}
 
-	// Create new message
+	// Create normal message
 	message := models.NewMessage(userID, user.Username, chatroomID, content, models.MessageTypeChat)
 
-	// Save message to database
+	// Save to database
 	err = s.messageRepo.Create(message)
 	if err != nil {
 		return nil, err
@@ -68,22 +67,22 @@ func (s *MessageService) CreateMessage(userID, chatroomID, content string) (*mod
 	return message, nil
 }
 
-// CreateBotMessage creates a message from the stock bot
+// Creates a message from the stock bot
 func (s *MessageService) CreateBotMessage(chatroomID string, stockResponse *models.StockResponse) (*models.Message, error) {
 	var content string
 
 	if stockResponse.Error != "" {
-		// Create error message
+		// Error message for quote
 		content = fmt.Sprintf("Error getting quote for %s: %s", stockResponse.Symbol, stockResponse.Error)
 	} else {
-		// Create stock quote message
+		// Message with the quote
 		content = fmt.Sprintf("%s quote is $%.2f per share", strings.ToUpper(stockResponse.Symbol), stockResponse.Price)
 	}
 
-	// Create new message
-	message := models.NewMessage("", "Stock Bot", chatroomID, content, models.MessageTypeStock)
+	// Create bot message using the bot ID instead of empty string
+	message := models.NewMessage(database.BotUserID, "Stock Bot", chatroomID, content, models.MessageTypeStock)
 
-	// Save message to database
+	// Save to database
 	err := s.messageRepo.Create(message)
 	if err != nil {
 		return nil, err
@@ -92,7 +91,7 @@ func (s *MessageService) CreateBotMessage(chatroomID string, stockResponse *mode
 	return message, nil
 }
 
-// GetMessagesByChatroomID retrieves messages for a specific chatroom
+// Gets messages for a specific chatroom
 func (s *MessageService) GetMessagesByChatroomID(chatroomID string) ([]*models.Message, error) {
 	return s.messageRepo.GetByChatroomID(chatroomID, MaxMessages)
 }

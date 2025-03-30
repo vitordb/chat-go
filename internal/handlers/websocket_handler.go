@@ -4,8 +4,10 @@ import (
 	"encoding/json"
 	"log"
 	"net/http"
+	"strings"
 	"sync"
 
+	"github.com/dbvitor/chat-go/internal/database"
 	"github.com/dbvitor/chat-go/internal/models"
 	"github.com/dbvitor/chat-go/internal/services"
 	"github.com/dbvitor/chat-go/pkg/auth"
@@ -114,7 +116,7 @@ func (h *WebSocketHandler) Handle(w http.ResponseWriter, r *http.Request) {
 
 	// Send system message
 	user, _ := h.userService.GetByID(userID)
-	systemMessage := models.NewMessage("", "System", chatroomID, user.Username+" joined the chat", models.MessageTypeSystem)
+	systemMessage := models.NewMessage(database.BotUserID, "System", chatroomID, user.Username+" joined the chat", models.MessageTypeSystem)
 	h.broadcastMessage(systemMessage, chatroomID)
 
 	// Handle incoming messages
@@ -133,7 +135,7 @@ func (h *WebSocketHandler) handleClient(conn *websocket.Conn, userID, chatroomID
 		// Send system message
 		user, err := h.userService.GetByID(userID)
 		if err == nil {
-			systemMessage := models.NewMessage("", "System", chatroomID, user.Username+" left the chat", models.MessageTypeSystem)
+			systemMessage := models.NewMessage(database.BotUserID, "System", chatroomID, user.Username+" left the chat", models.MessageTypeSystem)
 			h.broadcastMessage(systemMessage, chatroomID)
 		}
 	}()
@@ -149,6 +151,13 @@ func (h *WebSocketHandler) handleClient(conn *websocket.Conn, userID, chatroomID
 			break
 		}
 
+		log.Printf("Received message from user %s in chatroom %s: %s", userID, chatroomID, payload.Content)
+
+		// Check if it's a stock command
+		if strings.HasPrefix(payload.Content, "/stock=") {
+			log.Printf("Detected stock command: %s", payload.Content)
+		}
+
 		// Create and save message
 		message, err := h.messageService.CreateMessage(userID, chatroomID, payload.Content)
 		if err != nil {
@@ -160,6 +169,8 @@ func (h *WebSocketHandler) handleClient(conn *websocket.Conn, userID, chatroomID
 		if message != nil {
 			// Broadcast message to all clients in the chatroom
 			h.broadcastMessage(message, chatroomID)
+		} else {
+			log.Printf("Message is nil - likely a stock command that was processed")
 		}
 	}
 }
@@ -181,7 +192,11 @@ func (h *WebSocketHandler) broadcastMessage(message *models.Message, chatroomID 
 
 // processStockResults listens for stock results and broadcasts them
 func (h *WebSocketHandler) processStockResults() {
+	log.Println("Starting stock results processing...")
+
 	for delivery := range h.stockResults {
+		log.Printf("Received stock result delivery: %s", string(delivery.Body))
+
 		// Parse message
 		var result map[string]interface{}
 		err := json.Unmarshal(delivery.Body, &result)
@@ -189,6 +204,8 @@ func (h *WebSocketHandler) processStockResults() {
 			log.Printf("Error parsing stock result: %v", err)
 			continue
 		}
+
+		log.Printf("Decoded JSON result: %+v", result)
 
 		// Extract data
 		chatroomID, ok := result["chatroom_id"].(string)
@@ -215,6 +232,8 @@ func (h *WebSocketHandler) processStockResults() {
 			stockResponse.Error = errMsg
 		}
 
+		log.Printf("Creating bot message for chatroom %s with response: %+v", chatroomID, stockResponse)
+
 		// Create bot message
 		message, err := h.messageService.CreateBotMessage(chatroomID, stockResponse)
 		if err != nil {
@@ -222,7 +241,13 @@ func (h *WebSocketHandler) processStockResults() {
 			continue
 		}
 
+		log.Printf("Sending message to clients in chatroom %s: %+v", chatroomID, message)
+
 		// Broadcast message
 		h.broadcastMessage(message, chatroomID)
+
+		log.Printf("Stock quote message successfully sent to chatroom %s", chatroomID)
 	}
+
+	log.Println("Stock results processing loop finished")
 }

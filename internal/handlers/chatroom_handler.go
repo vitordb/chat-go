@@ -34,27 +34,23 @@ func (h *ChatroomHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Parse request body
 	var req CreateChatroomRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		http.Error(w, "Invalid request body", http.StatusBadRequest)
 		return
 	}
 
-	// Validate request
 	if req.Name == "" {
 		http.Error(w, "Chatroom name is required", http.StatusBadRequest)
 		return
 	}
 
-	// Create chatroom
 	chatroom, err := h.chatroomService.Create(req.Name)
 	if err != nil {
 		http.Error(w, "Failed to create chatroom", http.StatusInternalServerError)
 		return
 	}
 
-	// Return chatroom info
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(chatroom)

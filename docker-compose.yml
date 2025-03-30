@@ -30,34 +30,5 @@ services:
       timeout: 5s
       retries: 5
 
-  server:
-    build:
-      context: .
-      dockerfile: Dockerfile.server
-    container_name: chat-server
-    depends_on:
-      postgres:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
-    ports:
-      - "8080:8080"
-    environment:
-      - DB_HOST=postgres
-      - RABBITMQ_HOST=rabbitmq
-    restart: always
-
-  bot:
-    build:
-      context: .
-      dockerfile: Dockerfile.bot
-    container_name: chat-bot
-    depends_on:
-      - server
-      - rabbitmq
-    environment:
-      - RABBITMQ_HOST=rabbitmq
-    restart: always
-
 volumes:
   postgres_data: 

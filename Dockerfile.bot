@@ -1,4 +1,4 @@
-FROM golang:1.21-alpine AS builder
+FROM golang:1.23-rc-alpine AS builder
 
 WORKDIR /app
 
@@ -19,8 +19,13 @@ FROM alpine:latest
 
 WORKDIR /app
 
+# Add CA certificates for HTTPS
+RUN apk --no-cache add ca-certificates tzdata
+
 COPY --from=builder /bot .
-COPY .env .
+
+# Permissions
+RUN chmod +x /app/bot
 
 # Run the application
 CMD ["./bot"] 

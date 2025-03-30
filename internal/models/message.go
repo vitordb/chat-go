@@ -4,19 +4,14 @@ import (
 	"time"
 )
 
-// MessageType defines the type of message
 type MessageType string
 
 const (
-	// MessageTypeChat is a regular chat message
-	MessageTypeChat MessageType = "chat"
-	// MessageTypeStock is a stock quote message
-	MessageTypeStock MessageType = "stock"
-	// MessageTypeSystem is a system notification
+	MessageTypeChat   MessageType = "chat"
+	MessageTypeStock  MessageType = "stock"
 	MessageTypeSystem MessageType = "system"
 )
 
-// Message represents a chat message
 type Message struct {
 	ID         string      `json:"id"`
 	UserID     string      `json:"user_id"`
@@ -27,7 +22,6 @@ type Message struct {
 	CreatedAt  time.Time   `json:"created_at"`
 }
 
-// NewMessage creates a new chat message
 func NewMessage(userID, username, chatroomID, content string, msgType MessageType) *Message {
 	return &Message{
 		ID:         "",
@@ -40,7 +34,6 @@ func NewMessage(userID, username, chatroomID, content string, msgType MessageTyp
 	}
 }
 
-// StockResponse represents a response from the stock API
 type StockResponse struct {
 	Symbol string  `json:"symbol"`
 	Price  float64 `json:"price"`

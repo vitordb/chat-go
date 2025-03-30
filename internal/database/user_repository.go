@@ -7,17 +7,14 @@ import (
 	"github.com/dbvitor/chat-go/internal/models"
 )
 
-// UserRepository handles user database operations
 type UserRepository struct {
 	db *sql.DB
 }
 
-// NewUserRepository creates a new user repository
 func NewUserRepository(db *sql.DB) *UserRepository {
 	return &UserRepository{db: db}
 }
 
-// Create adds a new user to the database
 func (r *UserRepository) Create(user *models.User) error {
 	query := `INSERT INTO users (username, password, created_at, updated_at) 
 	          VALUES ($1, $2, $3, $4) 
@@ -34,7 +31,6 @@ func (r *UserRepository) Create(user *models.User) error {
 	return err
 }
 
-// GetByUsername retrieves a user by username
 func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
 	query := `SELECT id, username, password, created_at, updated_at 
 	          FROM users 
@@ -56,7 +52,6 @@ func (r *UserRepository) GetByUsername(username string) (*models.User, error) {
 	return &user, nil
 }
 
-// GetByID retrieves a user by ID
 func (r *UserRepository) GetByID(id string) (*models.User, error) {
 	query := `SELECT id, username, password, created_at, updated_at 
 	          FROM users 
@@ -78,7 +73,6 @@ func (r *UserRepository) GetByID(id string) (*models.User, error) {
 	return &user, nil
 }
 
-// Update updates user information
 func (r *UserRepository) Update(user *models.User) error {
 	query := `UPDATE users 
 	          SET username = $1, password = $2, updated_at = $3 
@@ -95,7 +89,6 @@ func (r *UserRepository) Update(user *models.User) error {
 	return err
 }
 
-// Delete removes a user from the database
 func (r *UserRepository) Delete(id string) error {
 	query := `DELETE FROM users WHERE id = $1`
 	_, err := r.db.Exec(query, id)

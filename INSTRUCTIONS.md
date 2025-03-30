@@ -4,44 +4,71 @@ This application consists of two main components:
 1. The web server that handles HTTP requests and WebSocket connections
 2. The stock bot that processes stock quote requests
 
-## Running with Docker Compose (Recommended)
+## Prerequisites
 
-If you have Docker and Docker Compose installed, you can run the entire application stack with a single command:
+Make sure you have the following installed:
+- Docker
+- Docker Compose
+- Go 1.18+ (for local execution without Docker)
+
+## Quick Start 
+
+The recommended way to start the application is:
 
 ```bash
-docker compose up
+make run-all
 ```
 
-Or using the Makefile:
+This command will:
+- Stop any previous Go processes
+- Start the web server and stock bot in background
+- Show instructions to access the application
+
+If you are starting the application for the first time or need to start with a clean database:
 
 ```bash
+make reset-all
+```
+
+This command will:
+- Stop all existing services
+- Remove Docker containers and volumes (resetting the database)
+- Restart Docker containers (PostgreSQL and RabbitMQ)
+- Start the web server and stock bot in background
+
+## Different Ways to Run the Application
+
+### Running Everything in Background (Recommended for Development)
+
+```bash
+# Start the application with existing Docker containers
+make run-all
+
+# OR, for a clean start with fresh database
+make reset-all
+```
+
+### Running with Logs in Foreground
+
+```bash
+# Start Docker containers, server and bot with logs in the terminal
+make run
+```
+
+### Running Just the Docker Containers
+
+```bash
+# Start only the Docker containers (PostgreSQL and RabbitMQ)
 make docker
 ```
 
-This will start:
-- PostgreSQL database
-- RabbitMQ message broker
-- Chat web server
-- Stock bot
-
-Access the application in your browser at: http://localhost:8080
-
-To stop all containers:
+### Stopping All Services
 
 ```bash
-make docker-down
+make stop-all
 ```
 
-## Manual Setup
-
-### Prerequisites
-
-Make sure you have the following installed:
-- Go 1.18+
-- PostgreSQL
-- RabbitMQ
-
-### Setup
+## Environment Setup
 
 1. Clone the repository:
 ```bash
@@ -49,85 +76,47 @@ git clone https://github.com/dbvitor/chat-go.git
 cd chat-go
 ```
 
-2. Install dependencies:
+2. Configure the `.env` file:
 ```bash
-go mod download
+# Database Configuration
+DB_HOST=postgres
+DB_PORT=5432
+DB_USER=postgres
+DB_PASSWORD=postgres
+DB_NAME=chatapp
+DB_SSL_MODE=disable
+
+# RabbitMQ Configuration
+RABBITMQ_HOST=rabbitmq
+RABBITMQ_PORT=5672
+RABBITMQ_USER=guest
+RABBITMQ_PASSWORD=guest
+
+# Server Configuration
+SERVER_PORT=8080
 ```
 
-3. Configure the environment variables:
-   The default configuration is in the `.env` file. Make any necessary changes to match your local environment.
-
-4. Setup PostgreSQL:
-   - Create a new database named `chatapp`
-   - The application will automatically create the required tables on startup
-
-5. Start RabbitMQ:
-   Make sure RabbitMQ is running on your system.
-
-### Running the Application
-
-You can use the provided Makefile to run the application:
+## Viewing Logs
 
 ```bash
-# Run both server and bot
-make run
+# Server logs
+tail -f server.log
 
-# Run only the server
-make run-server
-
-# Run only the bot
-make run-bot
+# Bot logs
+tail -f bot.log
 ```
 
-Alternatively, you can run the components manually:
+## Testing the Application
 
-1. Run the server:
-```bash
-go run cmd/server/main.go
+1. Access the application in your browser:
+```
+http://localhost:8080
 ```
 
-2. Run the stock bot in a separate terminal:
-```bash
-go run cmd/bot/main.go
+2. Register a new user
+3. Enter a chat room
+4. Try the stock quote command:
+```
+/stock=aapl.us
 ```
 
-3. Access the application in your browser at: http://localhost:8080
-
-## Using the Application
-
-1. Register a new account or login if you already have one
-2. Choose a chatroom to enter
-3. Send messages to other users
-4. Use the `/stock=<code>` command to get stock quotes (e.g., `/stock=aapl.us`)
-
-## Building the Application
-
-To build the application binaries:
-
-```bash
-make build
-```
-
-This will create binaries in the `build` directory.
-
-## Testing
-
-Run the tests with:
-
-```bash
-make test
-```
-
-Or manually:
-
-```bash
-go test ./... -v
-```
-
-## Available Make Commands
-
-For a full list of available commands:
-
-```bash
-make help
-``` 

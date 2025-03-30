@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"os"
 
-	_ "github.com/lib/pq" // PostgreSQL driver
+	_ "github.com/lib/pq"
 )
 
 // DB is the database connection
 var DB *sql.DB
+
+// BotUserID is the ID of the bot user in the database
+const BotUserID = "00000000-0000-0000-0000-000000000000"
 
 // Initialize sets up the database connection
 func Initialize() error {
@@ -87,6 +90,17 @@ func createTables() error {
 
 	// Insert default chatroom if none exists
 	_, err = DB.Exec("INSERT INTO chatrooms (name) VALUES ('General') ON CONFLICT DO NOTHING;")
+	if err != nil {
+		return err
+	}
+
+	// Insert the bot user if it doesn't exist
+	botUserQuery := `
+	INSERT INTO users (id, username, password, created_at, updated_at)
+	VALUES ($1, 'Stock Bot', 'botpassword', NOW(), NOW())
+	ON CONFLICT (id) DO NOTHING;
+	`
+	_, err = DB.Exec(botUserQuery, BotUserID)
 	if err != nil {
 		return err
 	}

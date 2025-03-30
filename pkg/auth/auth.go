@@ -2,6 +2,7 @@ package auth
 
 import (
 	"errors"
+	"log"
 	"net/http"
 	"os"
 
@@ -9,32 +10,37 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-// Define error types
 var (
 	ErrInvalidCredentials = errors.New("invalid username or password")
 	ErrUserAlreadyExists  = errors.New("user already exists")
 	ErrNotAuthenticated   = errors.New("not authenticated")
 )
 
-// SessionName is the name of the cookie used to store the session
 const SessionName = "chat-session"
 
-// UserKey is the key used to store the user in the session
 const UserKey = "user_id"
 
-// Store is the session store
 var Store *sessions.CookieStore
 
 // Initialize sets up the authentication module
 func Initialize() {
+	// Get session key from environment variable, or use a default key
+	sessionKey := os.Getenv("SESSION_KEY")
+	if sessionKey == "" {
+		sessionKey = "supersecretkey123456789"
+		log.Println("Warning: Using default session key. Set SESSION_KEY for better security.")
+	}
+
 	// Create a new cookie store
-	Store = sessions.NewCookieStore([]byte(os.Getenv("SESSION_KEY")))
+	Store = sessions.NewCookieStore([]byte(sessionKey))
 
 	// Set session options
 	Store.Options = &sessions.Options{
 		Path:     "/",
-		MaxAge:   86400 * 7, // 1 week
+		MaxAge:   86400 * 7,
 		HttpOnly: true,
+		// Add SameSite attribute for better security
+		SameSite: http.SameSiteLaxMode,
 	}
 }
 
@@ -43,14 +49,25 @@ func Authenticate(w http.ResponseWriter, r *http.Request, user *models.User) err
 	// Create a new session
 	session, err := Store.Get(r, SessionName)
 	if err != nil {
-		return err
+		log.Printf("Session error: %v", err)
+		session = sessions.NewSession(Store, SessionName)
+		session.Options = &sessions.Options{
+			Path:     "/",
+			MaxAge:   86400 * 7,
+			HttpOnly: true,
+			SameSite: http.SameSiteLaxMode,
+		}
 	}
 
 	// Store user ID in session
 	session.Values[UserKey] = user.ID
 
 	// Save the session
-	return session.Save(r, w)
+	err = session.Save(r, w)
+	if err != nil {
+		log.Printf("Failed to save session: %v", err)
+	}
+	return err
 }
 
 // GetAuthenticatedUser retrieves the authenticated user from the session
@@ -90,7 +107,6 @@ func Logout(w http.ResponseWriter, r *http.Request) error {
 
 // IsAuthenticated checks if the user is authenticated
 func IsAuthenticated(r *http.Request) bool {
-	// Get the session
 	session, err := Store.Get(r, SessionName)
 	if err != nil {
 		return false
