@@ -1,6 +1,8 @@
 module github.com/dbvitor/chat-go
 
-go 1.23.4
+go 1.23.0
+
+toolchain go1.23.4
 
 require (
 	github.com/gorilla/mux v1.8.1
